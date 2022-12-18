@@ -6,7 +6,8 @@ from matplotlib import pyplot as plt
 def patch_match(image, patch_size, n_iterations):
     # Initialize a random set of patches in the image
     patch_locations = np.random.randint(0, image.shape[0] - patch_size, size=(n_iterations, 2))
-    patches = [image[x:x+patch_size, y:y+patch_size] for x, y in patch_locations]
+    for y,x in patch_locations:
+        patches = image[y:y+patch_size,x:x+patch_size]
 
     # Iteratively update patch locations and find best-matching patches
     for iteration in range(n_iterations):
@@ -38,8 +39,18 @@ def synthesize_image(image, patches, patch_locations):
         completed_image[x:x+patch_size, y:y+patch_size] = patch
     return completed_image
 
-im = imread('copie.jpg')
-imshow(im)
-patch_size = 7
-n_iterations = 100
-patch_match(image, patch_size, n_iterations)
+image = imread('copy.png')
+plt.figure()
+imshow(image)
+
+print("Voici la matrice de l'image : \n",image)
+patch_size = 2
+n_iterations = 5
+#patch_match(image, patch_size, n_iterations)
+
+patch_start_point = np.random.randint(0, image.shape[0] - patch_size, size=(n_iterations, 2))
+print("Voici la patch_start_point : \n",patch_start_point,"\n")
+for y,x in patch_start_point:
+    #print("Je suis en position y=%d, x=%d et la valeur du pixel vaut %d \n"%(y,x,image[y,x]))
+    patches = image[y:y+patch_size,x:x+patch_size]
+print("Voici les patches : \n",patches)
