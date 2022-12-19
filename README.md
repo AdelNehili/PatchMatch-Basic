@@ -1,5 +1,6 @@
 # PatchMatch-Basic
 
+L'idée de ce mini-projet est d'implémenter de manière simplifiée l'algo. de patch-match. Pour ce faire, nous comparons deux images, l'image source et l'image target. L'image source étant la version sans modification et target, la version qui a subit une modification que l'on voudrait atténuer/rendre logique. Pour ce faire, on applique la méthode du moindre carré afin de trouver le patch aillant réduit le plus la distance entre source-target[y,x]
 Package needed:<br />
 &emsp;	pip install scikit-image
 
