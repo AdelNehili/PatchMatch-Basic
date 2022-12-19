@@ -98,4 +98,13 @@ source_portion = source[150:350, 350:550]#; show_my_image(source_portion)
 target_portion = target[150:350, 350:550]#; show_my_image(target_portion)
 
 synthesized_portion = synthesize_image(source, target, nnf, 100, 100, 200, 200);print("Here, the type is",type(synthesized_portion))
-show_my_image(synthesized_portion)
+show_my_image(synthesized_portion);plt.imsave('synthesized.jpg',synthesized)
+
+
+
+
+
+
+
+
+
