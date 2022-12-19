@@ -1,56 +1,101 @@
 import numpy as np
 from skimage.io import imread,imshow
 from matplotlib import pyplot as plt
+from PIL import Image
+
+def patch_match(source, target, patch_size):
+    # Compute the dimensions of the source and target images
+    source_height, source_width = source.shape[:2]
+    target_height, target_width = target.shape[:2]
+    
+    # Initialize the nearest neighbor field with random offsets
+    nnf = np.random.randint(0, target_height, size=(source_height, source_width, 2))
+    
+    # Iterate over the patches in the source image
+    for i in range(0, source_height - patch_size + 1, patch_size):
+        for j in range(0, source_width - patch_size + 1, patch_size):
+            # Extract the patch from the source image
+            source_patch = source[i:i+patch_size, j:j+patch_size]
+            
+            # Find the best matching patch in the target image
+            best_match_dist = float('inf')
+            best_match_coords = (0, 0)
+            for ii in range(0, target_height - patch_size + 1, patch_size):
+                for jj in range(0, target_width - patch_size + 1, patch_size):
+                    # Extract the patch from the target image
+                    target_patch = target[ii:ii+patch_size, jj:jj+patch_size]
+                    
+                    # Compute the distance between the two patches
+                    patch_dist = np.sum((source_patch - target_patch) ** 2)
+                    
+                    # Update the best match if necessary
+                    if patch_dist < best_match_dist:
+                        best_match_dist = patch_dist
+                        best_match_coords = (ii, jj)
+            
+            # Update the nearest neighbor field with the new best match
+            nnf[i:i+patch_size, j:j+patch_size] = best_match_coords
+    
+    return nnf
+
+"""
+# Test the patch match function with a pair of test images
+source = np.random.randint(0, 256, size=(256, 512, 3), dtype=np.uint8)
+target = np.random.randint(0, 256, size=(256, 512, 3), dtype=np.uint8)
+nnf = patch_match(source, target, patch_size=8)
+
+print(nnf.shape)  # Output: (256, 512, 2)
+"""
+
+def synthesize_image(source, target, nnf, x1, y1, x2, y2):
+    # Compute the dimensions of the source and target images
+    source_height, source_width = source.shape[:2]
+    target_height, target_width = target.shape[:2]
+    
+    # Initialize the synthesized image with the same shape as the source image
+    synthesized = np.copy(source)
+    
+    # Iterate over the patches in the desired portion of the source image
+    for i in range(y1, y2):
+        for j in range(x1, x2):
+            # Look up the best matching patch in the target image using the nearest neighbor field
+            ii, jj = nnf[i, j]
+            
+            # Copy the best matching patch from the target image to the synthesized image
+            synthesized[i, j] = target[ii, jj]
+    print("Here, the type is",type(synthesized))
+    return (synthesized/255)
 
 
-def patch_match(image, patch_size, n_iterations):
-    # Initialize a random set of patches in the image
-    patch_locations = np.random.randint(0, image.shape[0] - patch_size, size=(n_iterations, 2))
-    for y,x in patch_locations:
-        patches = image[y:y+patch_size,x:x+patch_size]
+def show_my_image(image):
+    plt.imshow(image,cmap='gray')
+    plt.show()
 
-    # Iteratively update patch locations and find best-matching patches
-    for iteration in range(n_iterations):
-        for i, patch in enumerate(patches):
-            # Find the patch in the image that best matches the current patch
-            best_match = find_best_match(image, patch)
-            # Update the patch location to the location of the best-matching patch
-            patch_locations[i] = best_match
+def show_my_image_to_float(image):
+    # Convert the image data to float and scale it to the range [0, 1]
+    image = image.astype(np.float32)
+    
+    # Display the image using the "gray" color map
+    plt.imshow(image, cmap='gray')
+    plt.show()
 
-        # Update the patches based on the new patch locations
-        patches = [image[x:x+patch_size, y:y+patch_size] for x, y in patch_locations]
+# Test the synthesize_image function with a pair of test images and a nearest neighbor field
+source = imread('copy.jpg');print("Voici mon dtype : ",source.dtype)#;show_my_image(source)
+height = source.shape[0]
+weight = source.shape[1]
 
-    # Synthesize the completed image using the patches and patch locations
-    completed_image = synthesize_image(image, patches, patch_locations)
-    return completed_image
+#target = np.random.randint(0, 255, size=(height, weight, 1), dtype=np.uint8);show_my_image(target)
+target = imread("oops.jpg", as_gray=True)#;show_my_image(target) #To force the grey dimension
 
-def find_best_match(image, patch):
-    # Calculate the sum of squared differences between the patch and all other patches in the image
-    ssd = np.sum((image - patch) ** 2, axis=(2, 3))
-    # Find the location of the patch with the lowest SSD
-    best_match = np.unravel_index(np.argmin(ssd), ssd.shape)
-    return best_match
 
-def synthesize_image(image, patches, patch_locations):
-    # Create an empty image with the same shape as the input image
-    completed_image = np.zeros_like(image)
-    # Fill in the image with the patches at their corresponding locations
-    for patch, (x, y) in zip(patches, patch_locations):
-        completed_image[x:x+patch_size, y:y+patch_size] = patch
-    return completed_image
+nnf = patch_match(source, target, patch_size=30) #Nearest neighbor field
+"""synthesized = synthesize_image(source, target, nnf);show_my_image(synthesized)
+plt.imsave('synthesized.jpg',synthesized)
+print(synthesized.shape)  # Output: (256, 512, 3)"""
 
-image = imread('copy.png')
-plt.figure()
-imshow(image)
+# Select a portion of the source and target images
+source_portion = source[150:350, 350:550]#; show_my_image(source_portion)
+target_portion = target[150:350, 350:550]#; show_my_image(target_portion)
 
-print("Voici la matrice de l'image : \n",image)
-patch_size = 2
-n_iterations = 5
-#patch_match(image, patch_size, n_iterations)
-
-patch_start_point = np.random.randint(0, image.shape[0] - patch_size, size=(n_iterations, 2))
-print("Voici la patch_start_point : \n",patch_start_point,"\n")
-for y,x in patch_start_point:
-    #print("Je suis en position y=%d, x=%d et la valeur du pixel vaut %d \n"%(y,x,image[y,x]))
-    patches = image[y:y+patch_size,x:x+patch_size]
-print("Voici les patches : \n",patches)
+synthesized_portion = synthesize_image(source, target, nnf, 100, 100, 200, 200);print("Here, the type is",type(synthesized_portion))
+show_my_image(synthesized_portion)

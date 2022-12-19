@@ -1,4 +1,5 @@
 #!/bin/bash
+clear
 
-python3 ./patch_match.py  
+python3 ./main.py  
 
